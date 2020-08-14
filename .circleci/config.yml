@@ -2,44 +2,25 @@
 #
 # Check https://circleci.com/docs/2.0/language-go/ for more details
 version: 2
-
-# common setup and steps
-defaultEnv: &defaultEnv
+jobs:
+  build:
     docker:
       # specify the version
-      - image: docker.io/fortio/fortio.build:v21
-    working_directory: /go/src/fortio.org/fortio
+      - image: circleci/golang:1.9
 
-jobs:
-  unit-tests:
-    <<: *defaultEnv
-    steps:
-      - checkout
-      - run: make test
-  release-tests:
-    <<: *defaultEnv
-    steps:
-      - setup_remote_docker:
-          version: 17.11.0-ce
-      - checkout
-      - run: make release-test
-  linters:
-    <<: *defaultEnv
-    steps:
-      - checkout
-      # If ran with default we get random errors because OOM killer kills some linters
-      - run: make local-lint DEBUG_LINTERS="--concurrency=2"
-  codecov:
-    <<: *defaultEnv
-    steps:
-      - checkout
-      - run: make coverage
+      # Specify service dependencies here if necessary
+      # CircleCI maintains a library of pre-built images
+      # documented at https://circleci.com/docs/2.0/circleci-images/
+      # - image: circleci/postgres:9.4
 
-workflows:
-  version: 2
-  all:
-    jobs:
-      - unit-tests
-      - release-tests
-      - codecov
-      - linters
+    #### TEMPLATE_NOTE: go expects specific checkout path representing url
+    #### expecting it in the form of
+    ####   /go/src/github.com/circleci/go-tool
+    ####   /go/src/bitbucket.org/circleci/go-tool
+    working_directory: /go/src/github.com/{{ORG_NAME}}/{{REPO_NAME}}
+    steps:
+      - checkout
+
+      # specify any bash command here prefixed with `run: `
+      - run: go get -v -t -d ./...
+      - run: go test -v ./...
